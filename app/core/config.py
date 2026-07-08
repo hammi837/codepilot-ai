@@ -1,26 +1,27 @@
 from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    project_name: str = "CodePilot AI"
-    version: str = "1.0.0"
-    debug: bool = True
-    host: str = "0.0.0.0"
-    port: int = 8000
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/codepilot"
-    secret_key: str = "replace-with-a-long-random-secret"
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
+    PROJECT_NAME: str = "CodePilot AI"
+    VERSION: str = "1.0.0"
+    DEBUG: bool = True
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    DATABASE_URL: str
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",
-        env_file_encoding="utf-8",
+        case_sensitive=True,
         extra="ignore",
     )
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     return Settings()
 
