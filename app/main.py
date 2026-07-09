@@ -1,6 +1,9 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.db.session import get_db
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,3 +25,12 @@ def health() -> dict[str, object]:
         "status": "healthy",
         "debug": settings.DEBUG,
     }
+
+
+@app.get("/db-test")
+def db_test(db: Session = Depends(get_db)) -> dict[str, object]:
+    try:
+        db.execute(text("SELECT 1"))
+        return {"database": "connected"}
+    except Exception as exc:
+        return {"database": "failed", "error": str(exc)}
