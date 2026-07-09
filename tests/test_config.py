@@ -17,7 +17,11 @@ def test_settings_read_values_from_env_file(tmp_path) -> None:
         "DEBUG=True\n"
         "HOST=127.0.0.1\n"
         "PORT=9000\n"
-        "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/demo\n"
+        "DB_HOST=localhost\n"
+        "DB_PORT=5432\n"
+        "DB_NAME=demo\n"
+        "DB_USER=postgres\n"
+        "DB_PASSWORD=postgres\n"
         "SECRET_KEY=super-secret-key\n"
         "ALGORITHM=HS512\n"
         "ACCESS_TOKEN_EXPIRE_MINUTES=90\n",
