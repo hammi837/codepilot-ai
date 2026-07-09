@@ -1,18 +1,36 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.db.session import get_db
 
 app = FastAPI(
-    title=settings.project_name,
-    version=settings.version,
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
 )
 
 
 @app.get("/")
-def read_root() -> dict[str, str]:
-    return {"message": "Welcome to CodePilot AI"}
+def root() -> dict[str, str]:
+    return {
+        "message": f"Welcome to {settings.PROJECT_NAME}",
+        "version": settings.VERSION,
+    }
 
 
 @app.get("/health")
-def health_check() -> dict[str, str]:
-    return {"status": "healthy"}
+def health() -> dict[str, object]:
+    return {
+        "status": "healthy",
+        "debug": settings.DEBUG,
+    }
+
+
+@app.get("/db-test")
+def db_test(db: Session = Depends(get_db)) -> dict[str, object]:
+    try:
+        db.execute(text("SELECT 1"))
+        return {"database": "connected"}
+    except Exception as exc:
+        return {"database": "failed", "error": str(exc)}
