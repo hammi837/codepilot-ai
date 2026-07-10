@@ -6,6 +6,9 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.ai import router as ai_router
 from app.api.v1.github import router as github_router
 from app.api.v1.users import router as users_router
+from app.api.v1.repository import router as repository_router
+from app.api.v1.indexing import router as indexing_router
+from app.api.v1.chunking import router as chunking_router
 from app.core.config import settings
 from app.db.session import get_db
 
@@ -18,6 +21,9 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
 app.include_router(github_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(repository_router, prefix="/api/v1")
+app.include_router(indexing_router, prefix="/api/v1")
+app.include_router(chunking_router, prefix="/api/v1")
 
 
 @app.get("/")
