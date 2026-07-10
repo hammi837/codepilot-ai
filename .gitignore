@@ -27,3 +27,5 @@ storage/
 *.log
 
 .DS_Store
+
+workspace/
