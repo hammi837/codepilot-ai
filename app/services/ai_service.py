@@ -1,0 +1,94 @@
+import os
+from typing import Any
+
+import httpx
+
+from app.core.config import settings
+from app.schemas.ai import AIRequest
+from openai import OpenAI
+
+
+class AIServiceError(Exception):
+    pass
+
+
+class AIService:
+    SYSTEM_PROMPT = "You are a senior Python engineer."
+
+    def __init__(self) -> None:
+        self.api_key = (
+            settings.GROQ_API_KEY
+            or settings.XAI_API_KEY
+            or settings.OPENAI_API_KEY
+            or os.getenv("GROQ_API_KEY")
+            or os.getenv("XAI_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+        )
+        if not self.api_key:
+            raise AIServiceError("AI API key is not configured")
+
+        # Determine base URL and model based on the key/provider
+        if (
+            settings.GROQ_API_KEY
+            or os.getenv("GROQ_API_KEY")
+            or (self.api_key and self.api_key.startswith("gsk_"))
+        ):
+            self.base_url = (settings.GROQ_BASE_URL or "https://api.groq.com/openai/v1").rstrip("/")
+            
+            # Use Groq model if configured; fallback to XAI/OpenAI models if they aren't defaults
+            model_candidate = settings.GROQ_MODEL or settings.XAI_MODEL or settings.OPENAI_MODEL
+            if model_candidate == "grok-4" or model_candidate.startswith("gpt-"):
+                self.model = "llama-3.3-70b-versatile"
+            else:
+                self.model = model_candidate
+        elif settings.XAI_API_KEY or os.getenv("XAI_API_KEY"):
+            self.base_url = (settings.XAI_BASE_URL or "https://api.x.ai/v1").rstrip("/")
+            self.model = settings.XAI_MODEL
+        else:
+            self.base_url = (settings.OPENAI_API_BASE or "https://api.openai.com/v1").rstrip("/")
+            self.model = settings.OPENAI_MODEL
+
+        self.temperature = settings.OPENAI_TEMPERATURE
+        self.max_tokens = settings.OPENAI_MAX_TOKENS
+        self.http_client = httpx.Client(base_url=self.base_url)
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, http_client=self.http_client)
+
+    def generate_response(self, prompt: str) -> str:
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+            )
+        except Exception as exc:
+            raise AIServiceError("AI provider request failed") from exc
+
+        return self._extract_output(response)
+
+    def _extract_output(self, response: Any) -> str:
+        if response is None:
+            raise AIServiceError("No response returned from AI provider")
+
+        choices = getattr(response, "choices", None)
+        if choices and len(choices) > 0:
+            first_choice = choices[0]
+            message = getattr(first_choice, "message", None)
+            if message is not None:
+                return getattr(message, "content", "") or ""
+
+            if isinstance(first_choice, dict):
+                message = first_choice.get("message")
+                if isinstance(message, dict):
+                    return str(message.get("content", ""))
+
+        if isinstance(response, dict):
+            if "choices" in response and isinstance(response["choices"], list):
+                first_choice = response["choices"][0]
+                if isinstance(first_choice, dict):
+                    return str(first_choice.get("message", {}).get("content", ""))
+
+        raise AIServiceError("Unable to parse AI response output")
