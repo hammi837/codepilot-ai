@@ -18,3 +18,15 @@ class RepositoryResponse(BaseModel):
     language: str | None = None
     private: bool
     clone_url: str | None = None
+
+class CloneRepositoryRequest(BaseModel):
+    repository: str
+
+class CloneRepositoryResponse(BaseModel):
+    status: str
+    path: str
+
+class RepositoryFile(BaseModel):
+    path: str
+    language: str
+    size: int
