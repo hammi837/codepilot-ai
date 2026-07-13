@@ -1,33 +1,64 @@
 services:
 
+  # ── PostgreSQL ─────────────────────────────────────────────────────────
   postgres:
     image: postgres:17
-
     container_name: codepilot-postgres
-
     restart: unless-stopped
-
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: codepilot
-      POSTGRES_HOST_AUTH_METHOD: trust
-
     ports:
       - "5433:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d codepilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # ── Redis ─────────────────────────────────────────────────────────────
   redis:
-    image: redis:8
-
+    image: redis:8-alpine
     container_name: codepilot-redis
-
     restart: unless-stopped
-
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── FastAPI App ───────────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: codepilot-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/codepilot
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./workspace:/app/workspace          # cloned repositories
+      - ./storage/chromadb:/app/storage/chromadb  # vector DB persistence
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
 
 volumes:
   postgres_data:
+  redis_data:
