@@ -3,7 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.repositories.user_repository import UserRepository
-from app.schemas.auth import LoginRequest, TokenResponse, UserRegisterRequest, UserResponse
+from app.schemas.auth import (
+    ForgotPasswordRequest,
+    LoginRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+    UserRegisterRequest,
+    UserResponse,
+)
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -27,3 +34,23 @@ def login_user(
     repository = UserRepository(db)
     service = AuthService(repository)
     return service.authenticate_user(payload)
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    payload: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    repository = UserRepository(db)
+    service = AuthService(repository)
+    return service.forgot_password(payload)
+
+
+@router.post("/reset-password")
+def reset_password(
+    payload: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    repository = UserRepository(db)
+    service = AuthService(repository)
+    return service.reset_password(payload)
