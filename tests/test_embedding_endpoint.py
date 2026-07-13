@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.api.v1.ai import router as ai_router
+from app.api.v1.embedding import router as embedding_router
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
@@ -46,31 +46,30 @@ def client() -> Generator[TestClient, None, None]:
     del os.environ["XAI_API_KEY"]
 
 
-@patch("app.services.ai_service.OpenAI")
-def test_ai_test_endpoint_returns_response(mock_openai, client: TestClient) -> None:
+@patch("app.services.embedding_service.OpenAI")
+def test_embedding_endpoint_returns_embedding(mock_openai, client: TestClient) -> None:
     mock_client = mock_openai.return_value
-    mock_choice = SimpleNamespace(message=SimpleNamespace(content="JWT is a compact, URL-safe token standard for transmitting claims."))
-    mock_response = SimpleNamespace(choices=[mock_choice])
-    mock_client.chat.completions.create.return_value = mock_response
+    mock_response = SimpleNamespace(data=[SimpleNamespace(embedding=[0.1, 0.2, 0.3])])
+    mock_client.embeddings.create.return_value = mock_response
 
     response = client.post(
-        "/api/v1/ai/test",
-        json={"prompt": "Explain JWT in one sentence."},
+        "/api/v1/embeddings/",
+        json={"text": "Hello world"},
     )
 
     assert response.status_code == 200
-    assert response.json()["response"] == "JWT is a compact, URL-safe token standard for transmitting claims."
+    assert response.json()["embedding"] == [0.1, 0.2, 0.3]
 
 
-@patch("app.services.ai_service.OpenAI")
-def test_ai_test_endpoint_handles_service_errors(mock_openai, client: TestClient) -> None:
+@patch("app.services.embedding_service.OpenAI")
+def test_embedding_endpoint_handles_service_errors(mock_openai, client: TestClient) -> None:
     mock_client = mock_openai.return_value
-    mock_client.chat.completions.create.side_effect = Exception("network error")
+    mock_client.embeddings.create.side_effect = Exception("network error")
 
     response = client.post(
-        "/api/v1/ai/test",
-        json={"prompt": "Explain FastAPI in one sentence."},
+        "/api/v1/embeddings/",
+        json={"text": "Hello world"},
     )
 
     assert response.status_code == 502
-    assert response.json()["detail"] == "AI provider request failed"
+    assert response.json()["detail"] == "Embedding provider request failed"
