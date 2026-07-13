@@ -1,10 +1,12 @@
 import os
-from typing import Any
+from typing import Any, List, Optional
 
 import httpx
 
 from app.core.config import settings
 from app.schemas.ai import AIRequest
+from app.schemas.chat import ChatMessage, ChatResponse, SourceReference
+from app.schemas.search import SearchResult
 from openai import OpenAI
 
 
@@ -53,6 +55,7 @@ class AIService:
         self.http_client = httpx.Client(base_url=self.base_url)
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, http_client=self.http_client)
 
+    # ── Original method (kept for backward compat) ─────────────────────────
     def generate_response(self, prompt: str) -> str:
         try:
             response = self.client.chat.completions.create(
@@ -69,6 +72,40 @@ class AIService:
 
         return self._extract_output(response)
 
+    # ── RAG-aware answer generation ────────────────────────────────────────
+    def answer_question(
+        self,
+        question: str,
+        context: str,
+        history: Optional[List[ChatMessage]] = None,
+    ) -> str:
+        """Call the LLM with a pre-built context and conversation history."""
+        from app.prompts.system_prompt import build_system_prompt
+
+        system_content = build_system_prompt(context)
+        messages: list = [{"role": "system", "content": system_content}]
+
+        # Inject last 10 conversation turns for memory
+        if history:
+            for msg in history[-10:]:
+                messages.append({"role": msg.role, "content": msg.content})
+
+        messages.append({"role": "user", "content": question})
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=2048,
+            )
+        except Exception as exc:
+            raise AIServiceError(f"LLM request failed: {exc}") from exc
+
+        raw = self._extract_output(response)
+        return raw.strip() if raw else "The model returned an empty response."
+
+    # ── Internal helpers ───────────────────────────────────────────────────
     def _extract_output(self, response: Any) -> str:
         if response is None:
             raise AIServiceError("No response returned from AI provider")

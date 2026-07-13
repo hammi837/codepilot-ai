@@ -38,7 +38,6 @@ def client() -> Generator[TestClient, None, None]:
 
     os.environ["XAI_API_KEY"] = "test-api-key"
     app.dependency_overrides[get_db] = override_get_db
-    app.include_router(ai_router, prefix="/api/v1")
 
     with TestClient(app) as test_client:
         yield test_client
