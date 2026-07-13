@@ -39,8 +39,19 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
 # ── Global exception handlers ──────────────────────────────────────────────
 register_exception_handlers(app)
+
+# ── CORS Middleware ────────────────────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ── Request / response logging middleware ──────────────────────────────────
 @app.middleware("http")
