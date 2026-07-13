@@ -105,6 +105,39 @@ class AIService:
         raw = self._extract_output(response)
         return raw.strip() if raw else "The model returned an empty response."
 
+    def stream_answer(
+        self,
+        question: str,
+        context: str,
+        history: Optional[List[ChatMessage]] = None,
+    ):
+        """Stream the LLM response token by token using SSE-compatible generator."""
+        from app.prompts.system_prompt import build_system_prompt
+
+        system_content = build_system_prompt(context)
+        messages: list = [{"role": "system", "content": system_content}]
+
+        if history:
+            for msg in history[-10:]:
+                messages.append({"role": msg.role, "content": msg.content})
+
+        messages.append({"role": "user", "content": question})
+
+        try:
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=2048,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta if chunk.choices else None
+                if delta and delta.content:
+                    yield delta.content
+        except Exception as exc:
+            raise AIServiceError(f"LLM streaming failed: {exc}") from exc
+
     # ── Internal helpers ───────────────────────────────────────────────────
     def _extract_output(self, response: Any) -> str:
         if response is None:
