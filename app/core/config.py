@@ -27,16 +27,19 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str | None = None
     OPENAI_MODEL: str = "gpt-4.1-mini"
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
     OPENAI_TEMPERATURE: float = 0.2
     OPENAI_MAX_TOKENS: int = 200
     OPENAI_API_BASE: str = "https://api.openai.com/v1"
 
     XAI_API_KEY: str | None = None
     XAI_MODEL: str = "grok-4"
+    XAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
     XAI_BASE_URL: str = "https://api.x.ai/v1"
 
     GROQ_API_KEY: str | None = None
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_EMBEDDING_MODEL: str = "llama-3.3-70b-embedding"
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
 
     model_config = SettingsConfigDict(
