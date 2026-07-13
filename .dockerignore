@@ -1,0 +1,46 @@
+# Python virtual environment — NEVER copy into Docker
+venv/
+.venv/
+env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Cloned repositories (huge, not needed in image)
+workspace/
+
+# ChromaDB storage (mounted as volume at runtime)
+storage/
+
+# Logs
+logs/
+
+# Git history
+.git/
+.gitignore
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.coverage
+htmlcov/
+
+# Environment files (injected at runtime)
+.env
+.env.*
+!.env.example
+
+# Docker build artifacts
+Dockerfile*
+docker-compose*.yml
