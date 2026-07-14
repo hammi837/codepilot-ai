@@ -17,3 +17,7 @@ class GitHubRepositoryItem(BaseModel):
     language: str | None = None
     default_branch: str
     html_url: str
+    description: str | None = None
+    clone_url: str | None = None
+    stars: int = 0
+    updated_at: str | None = None

@@ -27,6 +27,7 @@ class GitHubService:
             f"?client_id={urllib.parse.quote_plus(client_id)}"
             f"&redirect_uri={urllib.parse.quote_plus(callback_url)}"
             f"&scope=repo,user"
+            f"&prompt=consent"
         )
         if state:
             url += f"&state={urllib.parse.quote_plus(state)}"
@@ -119,6 +120,10 @@ class GitHubService:
                     language=repo.get("language"),
                     default_branch=repo.get("default_branch", "main"),
                     html_url=repo.get("html_url", ""),
+                    description=repo.get("description"),
+                    clone_url=repo.get("clone_url"),
+                    stars=repo.get("stargazers_count", 0),
+                    updated_at=repo.get("updated_at"),
                 )
             )
 
