@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class FileMetadataResponse(BaseModel):
     path: str
@@ -9,3 +10,10 @@ class FileMetadataResponse(BaseModel):
 class RepositoryStatsResponse(BaseModel):
     total_files: int
     total_size: int
+
+class FileContentResponse(BaseModel):
+    path: str
+    content: str
+    language: str
+    size: int
+    lines: int
