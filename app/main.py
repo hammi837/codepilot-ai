@@ -15,7 +15,8 @@ from app.api.v1.chunking import router as chunking_router
 from app.api.v1.vector import router as vector_router
 from app.api.v1.search import router as search_router
 from app.api.v1.chat import router as chat_router
-from app.api.v1.dashboard import router as dashboard_router
+from app.api.v1.dashboard import router as repository_dashboard_router
+from app.api.v1.user_dashboard import router as user_dashboard_router
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.core.exceptions import register_exception_handlers
@@ -39,8 +40,19 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
 # ── Global exception handlers ──────────────────────────────────────────────
 register_exception_handlers(app)
+
+# ── CORS Middleware ────────────────────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ── Request / response logging middleware ──────────────────────────────────
 @app.middleware("http")
@@ -65,7 +77,8 @@ app.include_router(chunking_router,   prefix="/api/v1")
 app.include_router(vector_router,     prefix="/api/v1")
 app.include_router(search_router,     prefix="/api/v1")
 app.include_router(chat_router,       prefix="/api/v1")
-app.include_router(dashboard_router,  prefix="/api/v1")
+app.include_router(repository_dashboard_router,  prefix="/api/v1")
+app.include_router(user_dashboard_router, prefix="/api/v1")
 
 
 # ── Built-in endpoints ─────────────────────────────────────────────────────

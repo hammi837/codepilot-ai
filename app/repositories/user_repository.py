@@ -23,3 +23,9 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def update_password(self, user: User, hashed_password: str) -> User:
+        user.hashed_password = hashed_password
+        self.db.commit()
+        self.db.refresh(user)
+        return user
