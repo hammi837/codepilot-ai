@@ -41,7 +41,9 @@ def github_callback(
         service.exchange_code(code, user_id)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
-    return {"message": "GitHub account connected"}
+    
+    # Redirect back to the frontend repositories page
+    return RedirectResponse(url="http://localhost:3000/repositories")
 
 
 @router.get("/profile", response_model=GitHubAccountResponse)
